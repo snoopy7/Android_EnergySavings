@@ -8,81 +8,69 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
-        <EditText
-        android:id="@+id/etZip"
-        android:layout_width="wrap_content"
+     <TextView
+         android:id="@+id/tvStateLabel"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_marginLeft="10dp"
+         android:layout_alignParentTop="true"
+         android:layout_marginTop="16dp"
+         android:text="Select State"
+         android:textAppearance="?android:attr/textAppearanceMedium" />
+     
+     <Button
+        android:id="@+id/btSearch"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:hint="Enter Zipcode"  
-        android:ems="10" >
-
-    </EditText>
-
-    <Button
-        android:id="@+id/btn1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/etZip"
-        android:layout_below="@+id/etZip"
+        android:layout_alignBottom="@+id/spState"
+        android:layout_alignTop="@+id/tvStateLabel"
+        android:layout_marginRight="10dp"
+        android:layout_toRightOf="@+id/spState"
         android:text="Search" />
+     
 
-    <TextView
-        android:id="@+id/tvCityLabel"
-        android:layout_width="wrap_content"
+    <Spinner
+        android:id="@+id/spState"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/btn1"
-        android:layout_below="@+id/btn1"
-        android:layout_marginTop="14dp"
-        android:text="City : " />
-
-    <TextView
-        android:id="@+id/tvCity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/tvCityLabel"
-        android:layout_toRightOf="@+id/tvCityLabel"
-        android:layout_marginLeft="10dp"
-        android:text=""
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-
-    <TextView
-        android:id="@+id/tvStateLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tvCity"
-        android:layout_marginTop="15dp"
-        android:text="State: " />
-
-        <TextView
-        android:id="@+id/tvState"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-		android:layout_alignBaseline="@+id/tvStateLabel"
-        android:layout_alignBottom="@+id/tvStateLabel"
-        android:layout_marginLeft="10dp"
-        android:layout_toRightOf="@+id/tvStateLabel"
-        android:text=""
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:layout_alignLeft="@+id/tvStateLabel"
+        android:layout_alignRight="@+id/btGraph"
+        android:layout_below="@+id/tvStateLabel" />
     
     <TextView
-        android:id="@+id/tvKWHLabel"
+        android:id="@+id/tvEnergyChoice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/tvState"
-        android:layout_marginTop="15dp"
-        android:text="Kwh(cents):" />
-
-    <TextView
-        android:id="@+id/tvKWH"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" 
-        android:layout_alignBaseline="@+id/tvKWHLabel"
-        android:layout_alignBottom="@+id/tvKWHLabel"
-        android:layout_marginLeft="10dp"
-        android:layout_toRightOf="@+id/tvKWHLabel"
-        android:text=""
+        android:layout_alignLeft="@+id/spState"
+        android:layout_below="@+id/spState"
+        android:paddingTop="20dp"
+        android:text="Choose Energy Source"
         android:textAppearance="?android:attr/textAppearanceMedium" />
+  
+    <Button
+        
+        android:id="@+id/btGraph"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Graph!"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+  
+        />
+
+    <GridView
+        android:id="@+id/gridView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btGraph"
+        android:layout_alignLeft="@+id/tvEnergyChoice"
+        android:layout_alignRight="@+id/btSearch"
+        android:layout_below="@+id/tvEnergyChoice"
+        android:gravity="center"
+        android:numColumns="3" >
+
+    </GridView>
+
+
 
 </RelativeLayout>

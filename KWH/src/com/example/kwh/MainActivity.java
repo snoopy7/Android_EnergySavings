@@ -24,23 +24,42 @@ import org.json.JSONTokener;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
-public class MainActivity extends Activity implements OnClickListener{
+@SuppressLint("NewApi")
+public class MainActivity extends Activity implements OnClickListener, OnItemSelectedListener, OnItemClickListener{
 	
 	
-	Button search;
-	TextView cityLabel, stateLabel, state, city, KWHLabel, kwh;
-	EditText zipcode;
+	JSONArray my_data = null;
+	boolean gotData = false;
+	boolean newapi = false;
+	Spinner states;
+	Button search, graph;
 	String stateFinal;
-	String KWHurl;
+	String KWHurl, naturalGasUrl, gasolineUrl;
+	GridView gridview;
 	
 	
 
@@ -62,96 +81,190 @@ public class MainActivity extends Activity implements OnClickListener{
 	
 	private void initialize(){
 	
-		zipcode = (EditText) findViewById(R.id.etZip);
-		cityLabel = (TextView) findViewById(R.id.tvCityLabel);
-		city = (TextView) findViewById(R.id.tvCity);
-		stateLabel = (TextView) findViewById(R.id.tvStateLabel);
-		state = (TextView) findViewById(R.id.tvState);
-		KWHLabel = (TextView) findViewById(R.id.tvKWHLabel);
-		kwh = (TextView) findViewById(R.id.tvKWH);
+		states = (Spinner) findViewById(R.id.spState);
+		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.states_arrays, android.R.layout.simple_spinner_item);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		states.setAdapter(adapter);
 		
-		search = (Button) findViewById(R.id.btn1);
+		gridview = (GridView) findViewById(R.id.gridView1);
+		gridview.setAdapter(new ImageAdapter(this));
+		gridview.setOnItemClickListener(this);
+		gridview.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE);
+		
+		if(newapi == true){
+			gridview.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+			gridview.setMultiChoiceModeListener(new MultiChoiceModeListener());
+		}
+		
+		search = (Button) findViewById(R.id.btSearch);
+		graph = (Button) findViewById(R.id.btGraph);
 		search.setOnClickListener(this);
+		graph.setOnClickListener(this);
 			
 		
 	}
 	
 	@Override
-	public void onClick(View arg0) {
+	public void onClick(View v) {
 		// TODO Auto-generated method stub
-		String zip = zipcode.getText().toString();
-		new AccessAPI().execute(zip);
-		/**
-		KWHurl = "http://api.eia.gov/series/?api_key=3FBC89E53B8E3CB592BA2BB733C07050&series_id=ELEC.PRICE."
-				+ stateFinal + "-RES.A";
-		new AccessAPIKWH().execute(KWHurl);
 		
-		***/
+		if(v.equals(graph)){
+			
+			if(gotData){
+				int index = 0;
+				double years[];
+				double cost[];
+			
+				
+				
+				//data is an array. find how long the array is
+				// and log it for debugging 
+				while ( my_data.isNull(index) != true ){
+					
+					index++;
+				}
+				Log.v("LENGTH", String.valueOf(index) );
+				
+				
+				
+				years = new double[index];
+				cost = new double[index];
+				
+				for( int i = 0 ; i < index ; i++) {
+					
+					try {
+						years[i] = Double.valueOf(my_data.getJSONArray(i).getString(0));
+					} catch (NumberFormatException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					try {
+						cost[i] = Double.valueOf(my_data.getJSONArray(i).getString(1));
+					} catch (NumberFormatException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					
+				}
+			
+			
+				
+				//debugging individual cost and 
+				//year double arrays
+				for( int k = 0; k < index ; k++){
+					Log.v("YEARS ARRAY", String.valueOf(years[k]));
+				
+				}
+				
+				for( int l = 0; l < index ; l++){
+					Log.v("COST ARRAY", String.valueOf(cost[l]));
+				
+				}
+				
 		
-	}
-		
-	private class AccessAPI extends AsyncTask<String, Void, String> {
-        @Override
-		protected String doInBackground(String... yourZip) {
-			// TODO Auto-generated method stub
-        	String reply = null;
-        	HttpEntity entity = null;
-       
-        	
-        	DefaultHttpClient myClient = new DefaultHttpClient();
-        	HttpContext localContext = new BasicHttpContext();
-        	HttpGet get = new HttpGet("http://ZiptasticAPI.com/" + yourZip[0]);
-    		HttpResponse response = null; 
-    		
-    		try {
-    			response = myClient.execute(get, localContext);
-    		} catch (ClientProtocolException e) {
-    			// TODO Auto-generated catch block
-    			e.printStackTrace();
-    		} catch (IOException e) {
-    			// TODO Auto-generated catch block
-    			e.printStackTrace();
-    		}
-    		
-    		try {
-				entity = response.getEntity();
-				reply = EntityUtils.toString(entity);
-			} catch (IllegalStateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				
+				Graph lineGraph = new Graph();
+				Intent lineIntent = lineGraph.getIntent(this, cost, years, index );
+				
+				startActivity(lineIntent);
 			}
-	
-    		return reply;
+				
+			
 		}
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(String result) {
-        	
-        	String tempCity = null, tempState = null;
-        	
-        	try {
-				JSONObject object = (JSONObject) new JSONTokener(result).nextValue();
-				tempCity = object.getString("city");
-				stateFinal = tempState = object.getString("state");
-				
-				city.setText(tempCity);
-				state.setText(tempState);
-				
-				KWHurl = "http://api.eia.gov/series/?api_key=3FBC89E53B8E3CB592BA2BB733C07050&series_id=ELEC.PRICE."
-						+ stateFinal + "-RES.A";
+		else{
+			
+			
+			if(stateFinal != null ){ 
+				KWHurl = getKWHUrl();
+				naturalGasUrl = getNaturalGasUrl();
+				gasolineUrl = getGasolineUrl();
 				
 				new AccessAPIKWH().execute(KWHurl);
 				
-	        	
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}   	
-       }		
-    }
+			}
+		}	
+	}
+	
+	
+	public String getKWHUrl(){
+		
+		//annual kwh data url
+		return "http://api.eia.gov/series/?api_key=3FBC89E53B8E3CB592BA2BB733C07050&series_id=ELEC.PRICE."
+		+ stateFinal + "-RES.A";
+		
+	}
+	public String getNaturalGasUrl(){
+		
+		//annual natural gas data url
+		
+		return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=NG.N3010" + stateFinal + "3.A";
+
+	}
+	public String getGasolineUrl(){
+		
+		//weekly gasoline data urls
+		if(stateFinal == "CA" || stateFinal == "CO" || stateFinal == "FL" || 
+		   stateFinal == "MA" || stateFinal == "MN" || stateFinal == "NY" || 
+		   stateFinal == "OH" || stateFinal == "TX" || stateFinal == "WA" ){
+			
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_S" +stateFinal + "_DPG.W";
+			
+		
+		//new england padd
+		}else if (stateFinal == "CN" || stateFinal == "ME" || stateFinal == "NH"
+			    || stateFinal == "RI" || stateFinal == "VT" ){
+				
+			return  "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R1X_DPG.W" ;
+		
+		// central atlantic padd
+		}else if(stateFinal == "DE" || stateFinal == "MD" || stateFinal == "NJ" ||
+				stateFinal == "PA"){
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R1Y_DPG.W";
+				
+		//lower atlantic padd	
+		}else if(stateFinal == "GA" || stateFinal == "NC" || stateFinal == "SC" ||
+				stateFinal == "VA" || stateFinal == "WV" ){
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R1Z_DPG.W";
+		
+		//west coast padd
+		}else if(stateFinal == "AK" || stateFinal == "AZ" || stateFinal == "HI" ||
+				stateFinal == "NV" || stateFinal == "OR"){
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R5XCA_DPG.W";
+
+			
+		//gulf coast padd	
+		}else if(stateFinal == "AL" || stateFinal == "AR" || stateFinal == "LA" ||
+				stateFinal == "MS" || stateFinal == "NM"){
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R30_DPG.W";
+		
+		//rocky mountain padd
+		}else if(stateFinal == "ID" || stateFinal == "MT" || stateFinal == "UT" ||
+				stateFinal == "WY"){
+			
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R40_DPG.W";
+		
+		// midwest padd
+		}else {
+			
+			return "http://api.eia.gov/series?api_key=YOUR_API_KEY_HERE&series_id=PET.EMM_EPMRU_PTE_R20_DPG.W";
+
+		}
+	}
+	
+	
 
 	private class AccessAPIKWH extends AsyncTask<String, Void, String> {
 
@@ -159,6 +272,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		protected String doInBackground(String... url) {
 			// TODO Auto-generated method stub
 			
+	
 			String kwh_s = null;
 			HttpResponse response = null;
 			DefaultHttpClient myClient_1 = new DefaultHttpClient();
@@ -186,22 +300,33 @@ public class MainActivity extends Activity implements OnClickListener{
 				JSONObject jsonO = new JSONObject(jsonData);
 				JSONArray series = jsonO.getJSONArray("series");
 				JSONObject series_sub = series.getJSONObject(0);
-				JSONArray data = series_sub.getJSONArray("data");
+				my_data = series_sub.getJSONArray("data");
 	
-				//debug
-				String tempData = data.toString();
+				//log the value of data for debugging
+				//data is an json array containing
+				//kwh cost/year values
+				String tempData = my_data.toString();
 				Log.v("JASON DATA", tempData);
 				
-				JSONArray first = data.getJSONArray(0);
 				
-				//debug
+				//data is an array. find how long the array is
+				// and log it for debugging 
+			
+				
+			
+				//get and log the first element of the array
+				//for debugging
+				JSONArray first = my_data.getJSONArray(0);
 				String tempFirst = first.toString();
 				Log.v("FIRST", tempFirst);
 				
+				// then get the first string 
+				//and print it for debugging.
 				kwh_s = first.getString(1);
-				
-				//debug
 				Log.v("KWH", kwh_s);
+
+				
+				
 			
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
@@ -219,8 +344,8 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		
 		protected void onPostExecute(String kwh_r) {
-        	
-			kwh.setText(kwh_r);
+			
+			gotData = true;
 			
 		}	
 		
@@ -228,6 +353,152 @@ public class MainActivity extends Activity implements OnClickListener{
 	}
 
 
+
+	//this onItemSelected is for the spinner
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View view, int pos,
+			long id) {
+		// TODO Auto-generated method stub
+			stateFinal = parent.getItemAtPosition(pos).toString();
+		
+	}
+
+	//this is also for spinner
+	@Override
+	public void onNothingSelected(AdapterView<?> arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
+	
+	//this is for the gridview's on item click listener
+	@Override
+	public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
+		// TODO Auto-generated method stub
+		
+		v.setSelected(true);
+		
+	}
+
+
+	public class ImageAdapter extends BaseAdapter {
+	    private Context mContext;
+
+	    public ImageAdapter(Context c) {
+	        mContext = c;
+	    }
+
+	    public int getCount() {
+	        return mThumbIds.length;
+	    }
+
+	    public Object getItem(int position) {
+	        return null;
+	    }
+
+	    public long getItemId(int position) {
+	        return 0;
+	    }
+
+	    // create a new ImageView for each item referenced by the Adapter
+	    public View getView(int position, View convertView, ViewGroup parent) {
+	        ImageView imageView;
+	     	        
+	        if (convertView == null) {  // if it's not recycled, initialize some attributes
+	            imageView = new ImageView(mContext);
+	            imageView.setLayoutParams(new GridView.LayoutParams(120, 120));
+	            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+	            imageView.setPadding(8, 8, 8, 8);
+	        } else {
+	            imageView = (ImageView) convertView;
+	        }
+
+	        imageView.setImageResource(mThumbIds[position]);
+	        return imageView;
+	    }
+
+	    // references to our images
+	    private Integer[] mThumbIds = {
+	            R.drawable.electricity, R.drawable.naturalgas,
+	            R.drawable.gasoline
+	       
+	    };
+	
+	}
+	
+	static class ViewHolder {
+		
+		ImageView energyPic;
+		TextView desc;
+		CheckBox checkbox;	
+		
+	}
+	
+	static 
+	
+	
+	 @SuppressLint("NewApi")
+	public class MultiChoiceModeListener implements GridView.MultiChoiceModeListener {
+
+		@Override
+		public boolean onActionItemClicked(ActionMode arg0, MenuItem arg1) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean onCreateActionMode(ActionMode arg0, Menu arg1) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public void onDestroyActionMode(ActionMode arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public boolean onPrepareActionMode(ActionMode arg0, Menu arg1) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public void onItemCheckedStateChanged(ActionMode arg0, int arg1,
+				long arg2, boolean arg3) {
+			// TODO Auto-generated method stub
+			
+		}
+	 }
+}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	/*************************
 	 * The code below shows the beginning steps
@@ -283,4 +554,3 @@ public class MainActivity extends Activity implements OnClickListener{
 	
 	
 
-}
